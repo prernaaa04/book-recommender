@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= book.title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <h1><%= book.title %></h1>
+  <p>by <%= book.authors %></p>
+  <img src="<%= book.image_url %>" alt="<%= book.title %>">
+  <p>Rating: <%= book.average_rating %></p>
+
+  <h2>You might also like</h2>
+  <div class="grid">
+    <% recommendations.forEach(rec => { %>
+      <div class="book-card">
+        <a href="/books/<%= rec.book_id %>">
+          <img src="<%= rec.image_url %>" alt="<%= rec.title %>">
+          <p><%= rec.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+
+  <a href="/">← Back to books</a>
+</body>
+</html>
