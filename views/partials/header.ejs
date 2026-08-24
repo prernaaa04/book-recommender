@@ -1,0 +1,10 @@
+<header>
+  <% if (userId) { %>
+    <p>Logged in as <%= username %> — <a href="/profile"><%= username %>'s profile</a> |
+      <form style="display:inline" method="POST" action="/logout"><button type="submit">Log out</button></form>
+    </p>
+  <% } else { %>
+    <p><a href="/login">Log in</a> or <a href="/signup">Sign up</a></p>
+  <% } %>
+  <p><a href="/">Home</a></p>
+</header>

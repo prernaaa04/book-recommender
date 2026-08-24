@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title><%= username %>'s Profile</title><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+  <%- include('partials/header') %>
+  <h1><%= username %>'s Profile</h1>
+
+  <h2>Currently Reading</h2>
+  <div class="grid">
+    <% shelves.reading.forEach(book => { %>
+      <div class="book-card">
+        <a href="/books/<%= book.book_id %>">
+          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+          <p><%= book.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+
+  <h2>Want to Read</h2>
+  <div class="grid">
+    <% shelves.tbr.forEach(book => { %>
+      <div class="book-card">
+        <a href="/books/<%= book.book_id %>">
+          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+          <p><%= book.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+
+  <h2>Read</h2>
+  <div class="grid">
+    <% shelves.read.forEach(book => { %>
+      <div class="book-card">
+        <a href="/books/<%= book.book_id %>">
+          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+          <p><%= book.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+</body>
+</html>

@@ -5,8 +5,22 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+const session = require('express-session');
+const bcrypt = require('bcrypt');
 
-// Homepage — just list some books for now
+app.use(express.urlencoded({ extended: true })); // needed to read form data
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use((req, res, next) => {
+  res.locals.userId = req.session.userId;
+  res.locals.username = req.session.username;
+  next();
+});
+
+// Homepage 
 app.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT book_id, title, authors, image_url FROM books LIMIT 20');
@@ -48,4 +62,98 @@ app.get('/books/:id', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+// Show signup form
+app.get('/signup', (req, res) => {
+  res.render('signup', { error: null });
+});
+
+// Handle signup
+app.post('/signup', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query(
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
+      [username, email, hash]
+    );
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err);
+    res.render('signup', { error: 'Username or email already taken' });
+  }
+});
+
+// Show login form
+app.get('/login', (req, res) => {
+  res.render('login', { error: null });
+});
+
+// Handle login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+
+    if (!user) return res.render('login', { error: 'Invalid email or password' });
+
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) return res.render('login', { error: 'Invalid email or password' });
+
+    req.session.userId = user.user_id;
+    req.session.username = user.username;
+    res.redirect('/');
+  } catch (err) {
+    console.error(err);
+    res.render('login', { error: 'Something went wrong' });
+  }
+});
+
+// Logout
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
+
+// Add or update a book's status on a user's shelf
+app.post('/books/:id/shelf', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+
+  const bookId = req.params.id;
+  const { status, total_pages } = req.body;
+
+  try {
+    await pool.query(`
+      INSERT INTO user_books (user_id, book_id, status, total_pages, started_at)
+      VALUES ($1, $2, $3, $4, CASE WHEN $3 = 'reading' THEN NOW() ELSE NULL END)
+      ON CONFLICT (user_id, book_id)
+      DO UPDATE SET status = $3, total_pages = COALESCE($4, user_books.total_pages), updated_at = NOW()
+    `, [req.session.userId, bookId, status, total_pages || null]);
+
+    res.redirect(`/books/${bookId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+});
+app.get('/profile', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+
+  try {
+    const result = await pool.query(`
+      SELECT ub.status, b.book_id, b.title, b.authors, b.image_url, ub.current_page, ub.total_pages
+      FROM user_books ub
+      JOIN books b ON b.book_id = ub.book_id
+      WHERE ub.user_id = $1
+      ORDER BY ub.updated_at DESC
+    `, [req.session.userId]);
+
+    const shelves = { tbr: [], reading: [], read: [] };
+    result.rows.forEach(row => shelves[row.status].push(row));
+
+    res.render('profile', { shelves });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
 });

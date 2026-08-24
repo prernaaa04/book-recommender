@@ -5,10 +5,22 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <%- include('partials/header') %>
   <h1><%= book.title %></h1>
   <p>by <%= book.authors %></p>
   <img src="<%= book.image_url %>" alt="<%= book.title %>">
   <p>Rating: <%= book.average_rating %></p>
+  <% if (userId) { %>
+  <form method="POST" action="/books/<%= book.book_id %>/shelf">
+    <select name="status">
+      <option value="tbr">Want to Read</option>
+      <option value="reading">Currently Reading</option>
+      <option value="read">Read</option>
+    </select>
+    <input type="number" name="total_pages" placeholder="Total pages (optional)">
+    <button type="submit">Save</button>
+  </form>
+<% } %>
 
   <h2>You might also like</h2>
   <div class="grid">

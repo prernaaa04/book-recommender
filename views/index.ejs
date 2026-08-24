@@ -5,7 +5,9 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <%- include('partials/header') %>
   <h1>Books</h1>
+ 
   <div class="grid">
     <% books.forEach(book => { %>
       <div class="book-card">
@@ -14,6 +16,7 @@
           <p><%= book.title %></p>
         </a>
       </div>
+      
     <% }) %>
   </div>
 </body>
