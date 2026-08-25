@@ -13,12 +13,18 @@
   <% if (userId) { %>
   <form method="POST" action="/books/<%= book.book_id %>/shelf">
     <select name="status">
-      <option value="tbr">Want to Read</option>
-      <option value="reading">Currently Reading</option>
-      <option value="read">Read</option>
+      <option value="tbr" <%= userBook && userBook.status === 'tbr' ? 'selected' : '' %>>Want to Read</option>
+      <option value="reading" <%= userBook && userBook.status === 'reading' ? 'selected' : '' %>>Currently Reading</option>
+      <option value="read" <%= userBook && userBook.status === 'read' ? 'selected' : '' %>>Read</option>
     </select>
-    <input type="number" name="total_pages" placeholder="Total pages (optional)">
-    <button type="submit">Save</button>
+   <input type="number" name="total_pages" placeholder="Total pages (optional)" value="<%= userBook && userBook.total_pages ? userBook.total_pages : '' %>">
+   <button type="submit"><%= userBook ? 'Update' : 'Add to Shelf' %></button>
+  </form>
+<% } %>
+<% if (userId) { %>
+  <form method="POST" action="/books/<%= book.book_id %>/progress">
+    <input type="number" name="current_page" placeholder="Current page" value="<%= userBook && userBook.current_page ? userBook.current_page : '' %>">
+    <button type="submit">Update Progress</button>
   </form>
 <% } %>
 

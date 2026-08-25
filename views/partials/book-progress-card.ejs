@@ -1,0 +1,27 @@
+<% if (userId && currentlyReading.length > 0) { %>
+  <h2>Continue Reading</h2>
+  <div class="grid">
+    <% currentlyReading.forEach(book => {
+         const hasPages = book.total_pages && book.total_pages > 0;
+         const current = book.current_page || 0;
+         const percent = hasPages ? Math.min(100, Math.round((current / book.total_pages) * 100)) : 0;
+         const pagesLeft = hasPages ? book.total_pages - current : null;
+         const minutesLeft = hasPages ? Math.round(pagesLeft * 2) : null; // ~2 min per page estimate
+    %>
+      <div class="book-card">
+        <a href="/books/<%= book.book_id %>">
+          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+          <p><%= book.title %></p>
+        </a>
+        <% if (hasPages) { %>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: <%= percent %>%;"></div>
+          </div>
+          <p class="progress-text"><%= percent %>% done · ~<%= minutesLeft %> min left</p>
+        <% } else { %>
+          <p class="progress-text">Set a total page count to track progress</p>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+<% } %>

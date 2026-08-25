@@ -23,8 +23,21 @@ app.use((req, res, next) => {
 // Homepage 
 app.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT book_id, title, authors, image_url FROM books LIMIT 20');
-    res.render('index', { books: result.rows });
+    const booksResult = await pool.query('SELECT book_id, title, authors, image_url FROM books LIMIT 20');
+
+    let currentlyReading = [];
+    if (req.session.userId) {
+      const readingResult = await pool.query(`
+        SELECT ub.current_page, ub.total_pages, b.book_id, b.title, b.image_url
+        FROM user_books ub
+        JOIN books b ON b.book_id = ub.book_id
+        WHERE ub.user_id = $1 AND ub.status = 'reading'
+        ORDER BY ub.updated_at DESC
+      `, [req.session.userId]);
+      currentlyReading = readingResult.rows;
+    }
+
+    res.render('index', { books: booksResult.rows, currentlyReading });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
@@ -40,6 +53,14 @@ app.get('/books/:id', async (req, res) => {
     const book = bookResult.rows[0];
 
     if (!book) return res.status(404).send('Book not found');
+        let userBook = null;
+    if (req.session.userId) {
+      const ubResult = await pool.query(
+        'SELECT * FROM user_books WHERE user_id = $1 AND book_id = $2',
+        [req.session.userId, bookId]
+      );
+      userBook = ubResult.rows[0] || null;
+    }
 
     const recResult = await pool.query(`
       SELECT b.book_id, b.title, b.authors, b.image_url, SUM(bt2.count) AS similarity_score
@@ -52,7 +73,7 @@ app.get('/books/:id', async (req, res) => {
       LIMIT 10
     `, [book.goodreads_book_id]);
 
-    res.render('book-details', { book, recommendations: recResult.rows });
+       res.render('book-details', { book, recommendations: recResult.rows, userBook });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
@@ -152,6 +173,23 @@ app.get('/profile', async (req, res) => {
     result.rows.forEach(row => shelves[row.status].push(row));
 
     res.render('profile', { shelves });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+});
+app.post('/books/:id/progress', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const bookId = req.params.id;
+  const { current_page } = req.body;
+
+  try {
+    await pool.query(`
+      UPDATE user_books
+      SET current_page = $1, updated_at = NOW()
+      WHERE user_id = $2 AND book_id = $3
+    `, [current_page, req.session.userId, bookId]);
+    res.redirect(`/books/${bookId}`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
