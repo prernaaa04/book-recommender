@@ -72,8 +72,24 @@ app.get('/books/:id', async (req, res) => {
       ORDER BY similarity_score DESC
       LIMIT 10
     `, [book.goodreads_book_id]);
+        const reviewsResult = await pool.query(`
+      SELECT r.rating, r.review_text, r.created_at, u.username
+      FROM reviews r
+      JOIN users u ON u.user_id = r.user_id
+      WHERE r.book_id = $1
+      ORDER BY r.created_at DESC
+    `, [bookId]);
 
-       res.render('book-details', { book, recommendations: recResult.rows, userBook });
+    let myReview = null;
+    if (req.session.userId) {
+      const myReviewResult = await pool.query(
+        'SELECT * FROM reviews WHERE user_id = $1 AND book_id = $2',
+        [req.session.userId, bookId]
+      );
+      myReview = myReviewResult.rows[0] || null;
+    }
+
+        res.render('book-details', { book, recommendations: recResult.rows, userBook, reviews: reviewsResult.rows, myReview });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
@@ -189,6 +205,26 @@ app.post('/books/:id/progress', async (req, res) => {
       SET current_page = $1, updated_at = NOW()
       WHERE user_id = $2 AND book_id = $3
     `, [current_page, req.session.userId, bookId]);
+    res.redirect(`/books/${bookId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+});
+// Submit or update a review
+app.post('/books/:id/review', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  const bookId = req.params.id;
+  const { rating, review_text } = req.body;
+
+  try {
+    await pool.query(`
+      INSERT INTO reviews (user_id, book_id, rating, review_text)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id, book_id)
+      DO UPDATE SET rating = $3, review_text = $4, created_at = NOW()
+    `, [req.session.userId, bookId, rating, review_text]);
+
     res.redirect(`/books/${bookId}`);
   } catch (err) {
     console.error(err);

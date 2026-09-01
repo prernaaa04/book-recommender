@@ -27,6 +27,54 @@
     <button type="submit">Update Progress</button>
   </form>
 <% } %>
+<% if (userId) { %>
+  <% if (myReview) { %>
+    <div class="review my-review">
+      <p><strong>Your review</strong> — <%= myReview.rating %>/5</p>
+      <% if (myReview.review_text) { %><p><%= myReview.review_text %></p><% } %>
+      <details>
+        <summary>Edit review</summary>
+        <form method="POST" action="/books/<%= book.book_id %>/review">
+          <select name="rating">
+            <option value="5" <%= myReview.rating === 5 ? 'selected' : '' %>>5 - Loved it</option>
+            <option value="4" <%= myReview.rating === 4 ? 'selected' : '' %>>4 - Really liked it</option>
+            <option value="3" <%= myReview.rating === 3 ? 'selected' : '' %>>3 - Liked it</option>
+            <option value="2" <%= myReview.rating === 2 ? 'selected' : '' %>>2 - It was okay</option>
+            <option value="1" <%= myReview.rating === 1 ? 'selected' : '' %>>1 - Didn't like it</option>
+          </select><br>
+          <textarea name="review_text" rows="4"><%= myReview.review_text %></textarea><br>
+          <button type="submit">Update Review</button>
+        </form>
+      </details>
+    </div>
+  <% } else { %>
+    <h2>Write a Review</h2>
+    <form method="POST" action="/books/<%= book.book_id %>/review">
+      <select name="rating">
+        <option value="5">5 - Loved it</option>
+        <option value="4">4 - Really liked it</option>
+        <option value="3">3 - Liked it</option>
+        <option value="2">2 - It was okay</option>
+        <option value="1">1 - Didn't like it</option>
+      </select><br>
+      <textarea name="review_text" rows="4" placeholder="Write your thoughts..."></textarea><br>
+      <button type="submit">Submit Review</button>
+    </form>
+  <% } %>
+<% } %>
+<h2>Reviews</h2>
+<% if (reviews.length === 0) { %>
+  <p>No reviews yet — be the first!</p>
+<% } else { %>
+ <% reviews.forEach(r => { %>
+  <% if (r.username !== username) { %>
+    <div class="review">
+      <p><strong><%= r.username %></strong> — <%= r.rating %>/5</p>
+      <% if (r.review_text) { %><p><%= r.review_text %></p><% } %>
+    </div>
+  <% } %>
+<% }) %>
+<% } %>
 
   <h2>You might also like</h2>
   <div class="grid">

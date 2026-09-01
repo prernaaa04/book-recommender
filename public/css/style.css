@@ -129,3 +129,37 @@ a {
   color: #666;
   margin-top: 4px;
 }
+.review {
+  border-bottom: 1px solid #e0d8ce;
+  padding: 12px 0;
+}
+
+textarea {
+  width: 100%;
+  max-width: 400px;
+  display: block;
+}
+details summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-block;
+  background-color: #7a4b2e;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+details summary:hover {
+  background-color: #603a22;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] summary {
+  margin-bottom: 12px;
+}
