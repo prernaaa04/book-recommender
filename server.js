@@ -88,8 +88,15 @@ app.get('/books/:id', async (req, res) => {
       );
       myReview = myReviewResult.rows[0] || null;
     }
+        const collabResult = await pool.query(`
+      SELECT b.book_id, b.title, b.authors, b.image_url, bs.score
+      FROM book_similarities bs
+      JOIN books b ON b.book_id = bs.similar_book_id
+      WHERE bs.book_id = $1
+      ORDER BY bs.score DESC
+    `, [book.book_id]);
 
-        res.render('book-details', { book, recommendations: recResult.rows, userBook, reviews: reviewsResult.rows, myReview });
+        res.render('book-details', { book, recommendations: recResult.rows, collabRecommendations: collabResult.rows, userBook, reviews: reviewsResult.rows, myReview });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
@@ -226,6 +233,25 @@ app.post('/books/:id/review', async (req, res) => {
     `, [req.session.userId, bookId, rating, review_text]);
 
     res.redirect(`/books/${bookId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+});
+app.get('/search', async (req, res) => {
+  const query = req.query.q || '';
+
+  try {
+    const result = await pool.query(
+      `SELECT book_id, title, authors, image_url
+       FROM books
+       WHERE title ILIKE $1 OR authors ILIKE $1
+       ORDER BY ratings_count DESC
+       LIMIT 20`,
+      [`%${query}%`]
+    );
+
+    res.render('search', { books: result.rows, query });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');

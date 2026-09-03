@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Search Books</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <h1>Search Books</h1>
+  <form method="GET" action="/search">
+    <input type="text" name="q" placeholder="Search by title or author..." value="<%= query %>">
+    <button type="submit">Search</button>
+  </form>
+
+  <% if (query && books.length === 0) { %>
+    <p>No books found for "<%= query %>"</p>
+  <% } %>
+
+  <div class="grid">
+    <% books.forEach(book => { %>
+      <div class="book-card">
+        <a href="/books/<%= book.book_id %>">
+          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+          <p><%= book.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+</body>
+</html>

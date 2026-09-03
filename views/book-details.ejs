@@ -87,7 +87,21 @@
       </div>
     <% }) %>
   </div>
-
+<h2>Readers Who Liked This Also Liked</h2>
+<% if (collabRecommendations.length === 0) { %>
+  <p>Not enough rating data yet for this book.</p>
+<% } else { %>
+  <div class="grid">
+    <% collabRecommendations.forEach(rec => { %>
+      <div class="book-card">
+        <a href="/books/<%= rec.book_id %>">
+          <img src="<%= rec.image_url %>" alt="<%= rec.title %>">
+          <p><%= rec.title %></p>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
   <a href="/">← Back to books</a>
 </body>
 </html>
