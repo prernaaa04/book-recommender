@@ -27,5 +27,16 @@
       </div>
     <% }) %>
   </div>
+  <div class="pagination">
+  <% if (page > 1) { %>
+    <a href="/search?q=<%= query %>&page=<%= page - 1 %>">← Previous</a>
+  <% } %>
+  <% if (totalPages > 0) { %>
+    <span>Page <%= page %> of <%= totalPages %></span>
+  <% } %>
+  <% if (page < totalPages) { %>
+    <a href="/search?q=<%= query %>&page=<%= page + 1 %>">Next →</a>
+  <% } %>
+</div>
 </body>
 </html>

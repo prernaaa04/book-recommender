@@ -251,18 +251,28 @@ app.post('/books/:id/review', async (req, res) => {
 });
 app.get('/search', async (req, res) => {
   const query = req.query.q || '';
+  const page = parseInt(req.query.page) || 1;
+  const limit = 20;
+  const offset = (page - 1) * limit;
 
   try {
     const result = await pool.query(
-      `SELECT book_id, title, authors, image_url,isbn
+      `SELECT book_id, title, authors, image_url, isbn
        FROM books
        WHERE title ILIKE $1 OR authors ILIKE $1
        ORDER BY ratings_count DESC
-       LIMIT 20`,
-      [`%${query}%`]
+       LIMIT $2 OFFSET $3`,
+      [`%${query}%`, limit, offset]
     );
 
-    res.render('search', { books: result.rows, query });
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM books WHERE title ILIKE $1 OR authors ILIKE $1`,
+      [`%${query}%`]
+    );
+    const totalResults = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalResults / limit);
+
+    res.render('search', { books: result.rows, query, page, totalPages });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
