@@ -14,12 +14,21 @@
     <% books.forEach(book => { %>
       <div class="book-card">
         <a href="/books/<%= book.book_id %>">
-          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+        <img src="<%= book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : book.image_url %>" alt="<%= book.title %>" onload="if(this.naturalWidth < 5) { this.src='<%= book.image_url %>'; }">
           <p><%= book.title %></p>
         </a>
       </div>
       
     <% }) %>
   </div>
+  <div class="pagination">
+  <% if (page > 1) { %>
+    <a href="/?page=<%= page - 1 %>">← Previous</a>
+  <% } %>
+  <span>Page <%= page %> of <%= totalPages %></span>
+  <% if (page < totalPages) { %>
+    <a href="/?page=<%= page + 1 %>">Next →</a>
+  <% } %>
+</div>
 </body>
 </html>

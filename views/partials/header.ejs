@@ -10,5 +10,27 @@
   <form method="GET" action="/search">
   <input type="text" name="q" placeholder="Search books...">
   <button type="submit">Go</button>
+  <button class="theme-toggle" id="themeToggle">☾ Dark mode</button>
 </form>
 </header>
+<script>
+  (function() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeToggle');
+      updateBtnText(saved);
+      btn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateBtnText(next);
+      });
+    });
+    function updateBtnText(theme) {
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = theme === 'dark' ? '☀ Light mode' : '☾ Dark mode';
+    }
+  })();
+</script>

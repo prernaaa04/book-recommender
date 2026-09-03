@@ -23,12 +23,23 @@ app.use((req, res, next) => {
 // Homepage 
 app.get('/', async (req, res) => {
   try {
-    const booksResult = await pool.query('SELECT book_id, title, authors, image_url FROM books LIMIT 20');
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    const booksResult = await pool.query(
+      'SELECT book_id, title, authors, image_url, isbn FROM books ORDER BY ratings_count DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+
+    const countResult = await pool.query('SELECT COUNT(*) FROM books');
+    const totalBooks = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalBooks / limit);
 
     let currentlyReading = [];
     if (req.session.userId) {
       const readingResult = await pool.query(`
-        SELECT ub.current_page, ub.total_pages, b.book_id, b.title, b.image_url
+        SELECT ub.current_page, ub.total_pages, b.book_id, b.title, b.image_url, b.isbn
         FROM user_books ub
         JOIN books b ON b.book_id = ub.book_id
         WHERE ub.user_id = $1 AND ub.status = 'reading'
@@ -37,7 +48,7 @@ app.get('/', async (req, res) => {
       currentlyReading = readingResult.rows;
     }
 
-    res.render('index', { books: booksResult.rows, currentlyReading });
+    res.render('index', { books: booksResult.rows, currentlyReading, page, totalPages });
   } catch (err) {
     console.error(err);
     res.status(500).send('Something went wrong');
@@ -63,12 +74,12 @@ app.get('/books/:id', async (req, res) => {
     }
 
     const recResult = await pool.query(`
-      SELECT b.book_id, b.title, b.authors, b.image_url, SUM(bt2.count) AS similarity_score
+      SELECT b.book_id, b.title, b.authors, b.image_url,b.isbn, SUM(bt2.count) AS similarity_score
       FROM book_tags bt1
       JOIN book_tags bt2 ON bt1.tag_id = bt2.tag_id AND bt1.goodreads_book_id != bt2.goodreads_book_id
       JOIN books b ON b.goodreads_book_id = bt2.goodreads_book_id
       WHERE bt1.goodreads_book_id = $1
-      GROUP BY b.book_id, b.title, b.authors, b.image_url
+      GROUP BY b.book_id, b.title, b.authors, b.image_url, b.isbn
       ORDER BY similarity_score DESC
       LIMIT 10
     `, [book.goodreads_book_id]);
@@ -89,7 +100,7 @@ app.get('/books/:id', async (req, res) => {
       myReview = myReviewResult.rows[0] || null;
     }
         const collabResult = await pool.query(`
-      SELECT b.book_id, b.title, b.authors, b.image_url, bs.score
+      SELECT b.book_id, b.title, b.authors, b.image_url, b.isbn, bs.score
       FROM book_similarities bs
       JOIN books b ON b.book_id = bs.similar_book_id
       WHERE bs.book_id = $1
@@ -185,7 +196,7 @@ app.get('/profile', async (req, res) => {
 
   try {
     const result = await pool.query(`
-      SELECT ub.status, b.book_id, b.title, b.authors, b.image_url, ub.current_page, ub.total_pages
+      SELECT ub.status, b.book_id, b.title, b.authors, b.image_url,b.isbn, ub.current_page, ub.total_pages
       FROM user_books ub
       JOIN books b ON b.book_id = ub.book_id
       WHERE ub.user_id = $1
@@ -243,7 +254,7 @@ app.get('/search', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT book_id, title, authors, image_url
+      `SELECT book_id, title, authors, image_url,isbn
        FROM books
        WHERE title ILIKE $1 OR authors ILIKE $1
        ORDER BY ratings_count DESC

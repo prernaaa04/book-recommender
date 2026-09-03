@@ -10,7 +10,7 @@
     %>
       <div class="book-card">
         <a href="/books/<%= book.book_id %>">
-          <img src="<%= book.image_url %>" alt="<%= book.title %>">
+           <img src="<%= book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : book.image_url %>" alt="<%= book.title %>" onload="if(this.naturalWidth < 5) { this.src='<%= book.image_url %>'; }">
           <p><%= book.title %></p>
         </a>
         <% if (hasPages) { %>

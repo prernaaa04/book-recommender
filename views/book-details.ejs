@@ -8,7 +8,7 @@
   <%- include('partials/header') %>
   <h1><%= book.title %></h1>
   <p>by <%= book.authors %></p>
-  <img src="<%= book.image_url %>" alt="<%= book.title %>">
+   <img src="<%= book.isbn ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg` : book.image_url %>" alt="<%= book.title %>" onload="if(this.naturalWidth < 5) { this.src='<%= book.image_url %>'; }">
   <p>Rating: <%= book.average_rating %></p>
   <% if (userId) { %>
   <form method="POST" action="/books/<%= book.book_id %>/shelf">
@@ -81,7 +81,7 @@
     <% recommendations.forEach(rec => { %>
       <div class="book-card">
         <a href="/books/<%= rec.book_id %>">
-          <img src="<%= rec.image_url %>" alt="<%= rec.title %>">
+           <img src="<%= rec.isbn ? `https://covers.openlibrary.org/b/isbn/${rec.isbn}-L.jpg` : rec.image_url %>" alt="<%= rec.title %>" onload="if(this.naturalWidth < 5) { this.src='<%= rec.image_url %>'; }">
           <p><%= rec.title %></p>
         </a>
       </div>
@@ -95,7 +95,7 @@
     <% collabRecommendations.forEach(rec => { %>
       <div class="book-card">
         <a href="/books/<%= rec.book_id %>">
-          <img src="<%= rec.image_url %>" alt="<%= rec.title %>">
+           <img src="<%= rec.isbn ? `https://covers.openlibrary.org/b/isbn/${rec.isbn}-L.jpg` : rec.image_url %>" alt="<%= rec.title %>" onload="if(this.naturalWidth < 5) { this.src='<%= rec.image_url %>'; }">
           <p><%= rec.title %></p>
         </a>
       </div>
